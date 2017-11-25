@@ -7,30 +7,27 @@ namespace LSDInDotNet.Models
     {
         public static TupleList CreateKernel(int dimension, double sigma = 1, double mean = 1)
         {
-            var kernel = new TupleList(dimension)
-            {
-                Size = 1,
-                Values = new double[dimension]
-            };
-
+            var kernel = new TupleList(dimension);
+            kernel.AddTuple(new double[dimension]);
             UpdateKernel(kernel, sigma, mean);
             return kernel;
         }
 
         public static void UpdateKernel(TupleList kernel, double sigma, double mean)
         {
+            double sum = 0;
             for (var i = 0; i < kernel.Dimension; i++)
             {
                 var value = (i - mean) / sigma;
-                kernel.Values[i] = Math.Exp(-0.5 * value * value);
+                kernel[i] = Math.Exp(-0.5 * value * value);
+                sum += kernel[i];
             }
 
-            var sum = kernel.Values.Sum();
             if (sum < 0) return;
 
             for (var i = 0; i < kernel.Dimension; i++)
             {
-                kernel.Values[i] /= sum;
+                kernel[i] /= sum;
             }
         }
     }

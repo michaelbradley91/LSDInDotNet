@@ -5,7 +5,7 @@ namespace LSDInDotNet.Services
 {
     public class ImageScaler
     {
-        public Image<double> ApplyGuassianSampler(Image<double> image, double scale, double sigmaScale)
+        public Image<double, T> ScaleWithGuassianSampler<T>(Image<double, T> image, double scale, double sigmaScale)
         {
             if (scale <= 0) throw new ArgumentOutOfRangeException(nameof(scale), "Must be positive");
             if (sigmaScale <= 0) throw new ArgumentOutOfRangeException(nameof(sigmaScale), "Must be positive");
@@ -22,15 +22,15 @@ namespace LSDInDotNet.Services
             var sigma = scale < 1 ? sigmaScale / scale : sigmaScale;
 
             const double precision = 3.0;
-            var h = (int) Math.Ceiling(sigma * Math.Sqrt(2 * precision * Math.Log(10.0)));
+            var h = (int) Math.Ceiling(sigma * Math.Sqrt(2.0 * precision * Math.Log(10.0)));
             var kernelSize = 1 + 2 * h;
             var kernel = GaussianKernel.CreateKernel(kernelSize);
 
             var doubleImageWidth = 2 * image.Width;
             var doubleImageHeight = 2 * image.Height;
 
-            var auxiliaryImage = new Image<double>(newWidth, image.Height);
-            var scaledImage = new Image<double>(newWidth, newHeight);
+            var auxiliaryImage = new Image<double, T>(newWidth, image.Height, image.Metadata);
+            var scaledImage = new Image<double, T>(newWidth, newHeight, image.Metadata);
 
             // First subsampling: x axis
             for (var x = 0; x < auxiliaryImage.Width; x++)
@@ -57,9 +57,9 @@ namespace LSDInDotNet.Services
                         while (j >= doubleImageWidth) j -= doubleImageWidth;
                         if (j >= image.Width) j = doubleImageWidth - 1 - j;
 
-                        sum += image.Data[j + y * image.Width] * kernel.Values[i];
+                        sum += image[j, y] * kernel[i];
                     }
-                    auxiliaryImage.Data[x + y * auxiliaryImage.Width] = sum;
+                    auxiliaryImage[x, y] = sum;
                 }
             }
             // Auxiliary image now has the scaling applied in the x direction
@@ -90,9 +90,9 @@ namespace LSDInDotNet.Services
                         while (j >= doubleImageHeight) j -= doubleImageHeight;
                         if (j >= image.Height ) j = doubleImageHeight - 1 - j;
 
-                        sum += auxiliaryImage.Data[x + j * auxiliaryImage.Width] * kernel.Values[i];
+                        sum += auxiliaryImage[x, j] * kernel[i];
                     }
-                    scaledImage.Data[x + y * scaledImage.Width] = sum;
+                    scaledImage[x, y] = sum;
                 }
             }
 

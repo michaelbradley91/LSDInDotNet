@@ -16,12 +16,27 @@ namespace LSDInDotNet.Models
 
             Size = 0;
             Dimension = dimension;
-            Values = new List<double>();
+            _values = new List<double>();
         }
 
-        public int Size;
+        public int Size { get; private set; }
         public int Dimension;
-        public IList<double> Values;
+        private readonly IList<double> _values;
+
+        public double this[int x, int y]
+        {
+            get => _values[x + y * Dimension];
+            set => _values[x + y * Dimension] = value;
+        }
+
+        /// <summary>
+        /// Auxiliary index to access and modify data in just the first tuple
+        /// </summary>
+        public double this[int x]
+        {
+            get => this[x, 0];
+            set => this[x, 0] = value;
+        }
 
         public void AddTuple(params double[] values)
         {
@@ -32,7 +47,7 @@ namespace LSDInDotNet.Models
 
             for (var i = 0; i < values.Length; i++)
             {
-                Values.Insert(Size * Dimension + i, values[i]);
+                _values.Insert(Size * Dimension + i, values[i]);
             }
 
             Size++;
