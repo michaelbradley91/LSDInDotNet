@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using LSDInDotNet.Models;
 
 namespace LSDInDotNet.Helpers
 {
@@ -157,6 +158,54 @@ namespace LSDInDotNet.Helpers
         {
             return 0.918938533204673 + (x - 0.5) * Math.Log(x) - x
                    + 0.5 * x * Math.Log(x * Math.Sinh(1 / x) + 1 / (810.0 * Math.Pow(x, 6.0)));
+        }
+
+        /// <summary>
+        /// Finds the y value for the given x value on the specified line
+        /// If x, x1 and x2 lie on the same line, the smallest y value on the line is chosen
+        /// (hence "low")
+        /// </summary>
+        public static double InterpolateLow(double x, DoublePoint firstPoint, DoublePoint secondPoint)
+        {
+            var leftPoint = firstPoint;
+            var rightPoint = secondPoint;
+            if (leftPoint.X > rightPoint.X)
+            {
+                leftPoint = secondPoint;
+                rightPoint = firstPoint;
+            }
+
+            if (x < leftPoint.X || x > rightPoint.X)
+            {
+                throw new ArgumentException("The point x did not lie on the line");
+            }
+
+            if (leftPoint.X.IsRoughlyEqualTo(rightPoint.X)) return Math.Min(leftPoint.Y, rightPoint.Y);
+            return leftPoint.Y + (x - leftPoint.X) * (rightPoint.Y - leftPoint.Y) / (rightPoint.X - leftPoint.X);
+        }
+
+        /// <summary>
+        /// Finds the y value for the given x value on the specified line
+        /// If x, x1 and x2 lie on the same line, the largest y value on the line is chosen
+        /// (hence "low")
+        /// </summary>
+        public static double InterpolateHigh(double x, DoublePoint firstPoint, DoublePoint secondPoint)
+        {
+            var leftPoint = firstPoint;
+            var rightPoint = secondPoint;
+            if (leftPoint.X > rightPoint.X)
+            {
+                leftPoint = secondPoint;
+                rightPoint = firstPoint;
+            }
+
+            if (x < leftPoint.X || x > rightPoint.X)
+            {
+                throw new ArgumentException("The point x did not lie on the line");
+            }
+
+            if (leftPoint.X.IsRoughlyEqualTo(rightPoint.X)) return Math.Max(leftPoint.Y, rightPoint.Y);
+            return leftPoint.Y + (x - leftPoint.X) * (rightPoint.Y - leftPoint.Y) / (rightPoint.X - leftPoint.X);
         }
     }
 }

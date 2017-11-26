@@ -1,19 +1,47 @@
 ﻿using System;
 using LSDInDotNet.Helpers;
+using LSDInDotNet.Models;
 
 namespace LSDInDotNet.Services
 {
     public interface INumberOfFalseAlarmsCalculator
     {
-        double CalculateLog10ExpectedNumberOfFalseAlarmsInRectangle(
-            int numberOfPixels, int numberOfAlignedPoints, double precision, double logNumberOfTests);
+        double CalculateLog10ExpectedNumberOfFalseAlarmsInRectangle<T>(Rectangle rectangle,
+            Image<double, T> angles, double logNumberOfTests);
     }
 
     public class NumberOfFalseAlarmsCalculator : INumberOfFalseAlarmsCalculator
     {
         private const double MaximumErrorAllowed = 0.1; // an error of 10% is accepted
 
-        public double CalculateLog10ExpectedNumberOfFalseAlarmsInRectangle(
+        public double CalculateLog10ExpectedNumberOfFalseAlarmsInRectangle<T>(Rectangle rectangle, Image<double, T> angles,
+            double logNumberOfTests)
+        {
+            var numberOfPoints = 0;
+            var numberOfAlignedPoints = 0;
+
+            var rectangleExplorationState = new RectangleExplorationState(rectangle);
+
+            while (!rectangleExplorationState.HasFinished)
+            {
+                var p = rectangleExplorationState.ExploredPixel;
+                if (p.X >= 0 && p.Y >= 0 && p.X < angles.Width && p.Y < angles.Height)
+                {
+                    numberOfPoints++;
+                    if (angles[p.X, p.Y].IsAlignedUpToPrecision(rectangle.Angle, rectangle.Precision))
+                    {
+                        numberOfAlignedPoints++;
+                    }
+                }
+
+                rectangleExplorationState.MoveToNextPixelToExplore();
+            }
+
+            return CalculateLog10ExpectedNumberOfFalseAlarmsInRectangle(numberOfPoints,
+                numberOfAlignedPoints, rectangle.Precision, logNumberOfTests);
+        }
+
+        private double CalculateLog10ExpectedNumberOfFalseAlarmsInRectangle(
             int numberOfPixels, int numberOfAlignedPoints, double precision, double logNumberOfTests)
         {
             // Binomial parameters

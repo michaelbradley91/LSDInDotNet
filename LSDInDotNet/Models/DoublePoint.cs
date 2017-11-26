@@ -2,18 +2,18 @@
 
 namespace LSDInDotNet.Models
 {
-    public struct Point
+    public struct DoublePoint
     {
-        public int X { get; set; }
-        public int Y { get; set; }
+        public double X { get; set; }
+        public double Y { get; set; }
 
-        public Point(int x, int y)
+        public DoublePoint(double x, double y)
         {
             X = x;
             Y = y;
         }
 
-        public double GetDistanceFrom(Point otherPoint)
+        public double GetDistanceFrom(DoublePoint otherPoint)
         {
             return GetDistanceBetween(X, Y, otherPoint.X, otherPoint.Y);
         }
