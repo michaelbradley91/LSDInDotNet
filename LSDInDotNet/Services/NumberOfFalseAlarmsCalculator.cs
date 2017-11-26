@@ -20,21 +20,15 @@ namespace LSDInDotNet.Services
             var numberOfPoints = 0;
             var numberOfAlignedPoints = 0;
 
-            var rectangleExplorationState = new RectangleExplorationState(rectangle);
-
-            while (!rectangleExplorationState.HasFinished)
+            foreach (var p in rectangle)
             {
-                var p = rectangleExplorationState.ExploredPixel;
-                if (p.X >= 0 && p.Y >= 0 && p.X < angles.Width && p.Y < angles.Height)
-                {
-                    numberOfPoints++;
-                    if (angles[p.X, p.Y].IsAlignedUpToPrecision(rectangle.Angle, rectangle.Precision))
-                    {
-                        numberOfAlignedPoints++;
-                    }
-                }
+                if (p.X < 0 || p.Y < 0 || p.X >= angles.Width || p.Y >= angles.Height) continue;
 
-                rectangleExplorationState.MoveToNextPixelToExplore();
+                numberOfPoints++;
+                if (angles[p.X, p.Y].IsAlignedUpToPrecision(rectangle.Angle, rectangle.Precision))
+                {
+                    numberOfAlignedPoints++;
+                }
             }
 
             return CalculateLog10ExpectedNumberOfFalseAlarmsInRectangle(numberOfPoints,

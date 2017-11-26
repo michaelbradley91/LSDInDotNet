@@ -1,6 +1,10 @@
-﻿namespace LSDInDotNet.Models
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace LSDInDotNet.Models
 {
-    public struct Rectangle
+    public struct Rectangle : IEnumerable<Point>
     {
         public Point FirstPoint { get; private set; }
         public Point SecondPoint { get; private set; }
@@ -26,6 +30,16 @@
                 Precision = Precision,
                 ProbabilityOfPointWithAngleWithinPrecision = ProbabilityOfPointWithAngleWithinPrecision
             };
+        }
+
+        public IEnumerator<Point> GetEnumerator()
+        {
+            return new RectangleExplorer(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }
