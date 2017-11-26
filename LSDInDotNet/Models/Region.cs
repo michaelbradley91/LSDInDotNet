@@ -46,9 +46,9 @@ namespace LSDInDotNet.Models
             while (node != null)
             {
                 var p = node.Value;
-                for (var xx = p.X - 1; xx < p.X + 1; xx++)
+                for (var xx = p.X - 1; xx <= p.X + 1; xx++)
                 {
-                    for (var yy = p.Y - 1; yy < p.Y + 1; yy++)
+                    for (var yy = p.Y - 1; yy <= p.Y + 1; yy++)
                     {
                         if (xx < 0 || yy < 0 || xx >= used.Width || yy >= used.Height ||
                             used[xx, yy] || !angles[xx, yy].IsAlignedUpToPrecision(regionAngle, precision))
