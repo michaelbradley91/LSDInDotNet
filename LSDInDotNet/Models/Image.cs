@@ -4,6 +4,12 @@ namespace LSDInDotNet.Models
 {
     public struct Image<TData, TMetadata>
     {
+        public int Width { get; }
+        public int Height { get; }
+        public TMetadata Metadata { get; }
+
+        private readonly TData[] _data;
+
         public Image(int width, int height, TData defaultValue, TMetadata metadata)
             : this(width, height, metadata)
         {
@@ -36,13 +42,7 @@ namespace LSDInDotNet.Models
             Height = height;
             Metadata = metadata;
         }
-
-        private readonly TData[] _data;
-
-        public int Width { get; }
-        public int Height { get; }
-        public TMetadata Metadata { get; }
-
+        
         public TData this[int x, int y]
         {
             get => _data[x + y * Width];

@@ -40,12 +40,13 @@ namespace LSDInDotNet.Tests.Services
 
             var stopWatch = new Stopwatch();
             stopWatch.Start();
-            for (var i = 0; i < 200; i++)
+            const int numberOfRuns = 20;
+            for (var i = 0; i < numberOfRuns; i++)
             {
                 _imageScaler.ScaleWithGuassianSampler(pgmImage, ScaleFactor, SigmaScaleFactor);
             }
             stopWatch.Stop();
-            var perSecond = 1000 / (stopWatch.ElapsedMilliseconds / 1000);
+            var perSecond = numberOfRuns / (stopWatch.ElapsedMilliseconds / 1000);
             Console.WriteLine($"Took {stopWatch.ElapsedMilliseconds}ms, running at {perSecond} scalings per second");
         }
     }

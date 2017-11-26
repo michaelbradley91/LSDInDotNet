@@ -4,8 +4,14 @@ namespace LSDInDotNet.Models
 {
     public struct Point
     {
-        public int X;
-        public int Y;
+        public int X { get; }
+        public int Y { get; }
+
+        public Point(int x, int y)
+        {
+            X = x;
+            Y = y;
+        }
 
         public double GetDistanceFrom(Point otherPoint)
         {
