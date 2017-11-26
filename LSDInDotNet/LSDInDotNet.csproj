@@ -51,9 +51,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\DoubleExtensions.cs" />
+    <Compile Include="Helpers\MathHelpers.cs" />
     <Compile Include="LineSegmentDetector.cs" />
     <Compile Include="LineSegmentDetectorWrapper.cs" />
     <Compile Include="Models\Image.cs" />
+    <Compile Include="Models\LevelLineResult.cs" />
+    <Compile Include="Models\DoublePoint.cs" />
+    <Compile Include="Models\Rectangle.cs" />
+    <Compile Include="Models\RectangleExplorer.cs" />
+    <Compile Include="Models\Region.cs" />
     <Compile Include="Models\TupleList.cs" />
     <Compile Include="Services\DependencyResolver.cs" />
     <Compile Include="Models\CoordinateList.cs" />
@@ -62,7 +68,9 @@
     <Compile Include="Services\ErrorHandler.cs" />
     <Compile Include="Models\GaussianKernel.cs" />
     <Compile Include="Services\ImageScaler.cs" />
+    <Compile Include="Services\LevelLineCalculator.cs" />
     <Compile Include="Services\LsdLogger.cs" />
+    <Compile Include="Services\NumberOfFalseAlarmsCalculator.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="NLog.config">

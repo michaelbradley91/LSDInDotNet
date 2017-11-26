@@ -5,12 +5,12 @@ using LSDInDotNet.Models;
 
 namespace LSDInDotNet.Services
 {
-    public interface ILevelLineGenerator
+    public interface ILevelLineCalculator
     {
         LevelLineResult<T> CreateLevelLineImage<T>(Image<double, T> angleImage, double threshold, CoordinateList coordinates, int numberOfBins);
     }
 
-    public class LevelLineGenerator : ILevelLineGenerator
+    public class LevelLineCalculator : ILevelLineCalculator
     {
         public LevelLineResult<T> CreateLevelLineImage<T>(Image<double, T> angleImage, double threshold, CoordinateList coordinates, int numberOfBins)
         {

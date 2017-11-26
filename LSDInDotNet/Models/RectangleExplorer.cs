@@ -5,7 +5,7 @@ using LSDInDotNet.Helpers;
 
 namespace LSDInDotNet.Models
 {
-    public class RectangleExplorer : IEnumerator<Point>
+    public class RectangleExplorer<T> : IEnumerator<Point>
     {
         // Left most first, then bottom (largest y value)
         private readonly DoublePoint[] _fourCornersInCircularOrder;
@@ -16,7 +16,7 @@ namespace LSDInDotNet.Models
         // If we are exploring a pixel right of any pixel in the rectangle
         private bool HasFinished => _exploredPixel.X > _fourCornersInCircularOrder[2].X;
 
-        public RectangleExplorer(Rectangle rectangle)
+        public RectangleExplorer(Rectangle<T> rectangle)
         {
             var x1 = rectangle.FirstPoint.X;
             var x2 = rectangle.SecondPoint.X;

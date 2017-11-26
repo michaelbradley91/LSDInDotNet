@@ -48,5 +48,11 @@ namespace LSDInDotNet.Models
             get => _data[x + y * Width];
             set => _data[x + y * Width] = value;
         }
+
+        public TData this[Point point]
+        {
+            get => this[point.X, point.Y];
+            set => this[point.X, point.Y] = value;
+        }
     }
 }

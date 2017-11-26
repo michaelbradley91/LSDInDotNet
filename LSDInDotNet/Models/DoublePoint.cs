@@ -13,6 +13,11 @@ namespace LSDInDotNet.Models
             Y = y;
         }
 
+        public DoublePoint Clone()
+        {
+            return new DoublePoint(X, Y);
+        }
+
         public double GetDistanceFrom(DoublePoint otherPoint)
         {
             return GetDistanceBetween(X, Y, otherPoint.X, otherPoint.Y);
