@@ -5,7 +5,7 @@ using LSDInDotNet.Helpers;
 
 namespace LSDInDotNet.Models
 {
-    public struct Rectangle<T> : IEnumerable<Point>
+    public class Rectangle<T> : IEnumerable<Point>
     {
         public DoublePoint FirstPoint;
         public DoublePoint SecondPoint;
@@ -22,6 +22,8 @@ namespace LSDInDotNet.Models
         /// Improves the rectangle with a number of heuristics.
         /// Note that these may shift the rectangle off of its points,
         /// which could lead to some slight inaccuracy.It may be possible to improve this.
+        /// 
+        /// Returns the expected number of false alarms log base 10.
         /// </summary>
         public double Improve(double logNumberOfTests, double logEpsilon)
         {

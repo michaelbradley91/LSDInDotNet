@@ -2,7 +2,7 @@
 
 namespace LSDInDotNet.Models
 {
-    public struct Image<TData, TMetadata>
+    public class Image<TData, TMetadata>
     {
         public int Width { get; }
         public int Height { get; }

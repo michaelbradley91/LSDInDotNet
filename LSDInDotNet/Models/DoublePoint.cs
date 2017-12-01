@@ -2,7 +2,7 @@
 
 namespace LSDInDotNet.Models
 {
-    public struct DoublePoint
+    public class DoublePoint
     {
         public double X { get; set; }
         public double Y { get; set; }

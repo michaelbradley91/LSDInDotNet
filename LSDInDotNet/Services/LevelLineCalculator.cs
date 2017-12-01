@@ -7,23 +7,23 @@ namespace LSDInDotNet.Services
 {
     public interface ILevelLineCalculator
     {
-        LevelLineResult<T> CreateLevelLineImage<T>(Image<double, T> angleImage, double threshold, CoordinateList coordinates, int numberOfBins);
+        LevelLineResult<T> CreateLevelLineImage<T>(Image<double, T> image, double threshold, int numberOfBins);
     }
 
     public class LevelLineCalculator : ILevelLineCalculator
     {
-        public LevelLineResult<T> CreateLevelLineImage<T>(Image<double, T> angleImage, double threshold, CoordinateList coordinates, int numberOfBins)
+        public LevelLineResult<T> CreateLevelLineImage<T>(Image<double, T> image, double threshold, int numberOfBins)
         {
             if (threshold < 0) throw new ArgumentOutOfRangeException(nameof(threshold), "Must be positive");
             if (numberOfBins <= 0) throw new ArgumentOutOfRangeException(nameof(numberOfBins), "The number of bins must be positive");
 
             var maxGradient = 0.0;
 
-            var width = angleImage.Width;
-            var height = angleImage.Height;
+            var width = image.Width;
+            var height = image.Height;
 
-            var gradientImage = new Image<double, T>(width, height, angleImage.Metadata);
-            var modGradientImage = new Image<double, T>(width, height, angleImage.Metadata);
+            var gradientImage = new Image<double, T>(width, height, image.Metadata);
+            var modGradientImage = new Image<double, T>(width, height, image.Metadata);
             
             // Gradients are null on the bottom and right border of the image
             for (var x = 0; x < width; x++) gradientImage[x, height - 1] = MathHelpers.NoAngle;
@@ -45,8 +45,8 @@ namespace LSDInDotNet.Services
                          gy = C+D - (A+B)   vertical difference
                        com1 and com2 are just to avoid 2 additions.
                      */
-                    var com1 = angleImage[x + 1, y + 1] - angleImage[x, y];
-                    var com2 = angleImage[x + 1, y] - angleImage[x, y + 1];
+                    var com1 = image[x + 1, y + 1] - image[x, y];
+                    var com2 = image[x + 1, y] - image[x, y + 1];
                     var gx = com1 + com2;
                     var gy = com1 - com2;
                     var normSortOfSquared = gx * gx + gy * gy;

@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+using System.Security.Cryptography;
 using LSDInDotNet.Helpers;
 
 namespace LSDInDotNet.Models
@@ -12,20 +9,21 @@ namespace LSDInDotNet.Models
     {
         public Image<double, T> ModGradientImage;
         public Image<double, T> Angles;
+        public Image<bool, T> Used;
         public LinkedList<Point> Points;
         public double RegionAngle;
         public double Precision;
         public int Size => Points.Count;
 
-        private Region(Image<double,T> modGradientImage, Image<double,T> angles, LinkedList<Point> points, double regionAngle, double precision)
+        private Region(Image<double,T> modGradientImage, Image<double,T> angles, Image<bool, T> used, double precision)
         {
-            if (points == null || points.Count <= 1) throw new ArgumentException("The region must have more than one point", nameof(points));
             if (precision < 0) throw new ArgumentOutOfRangeException(nameof(precision), "Must be non-negative");
             
             ModGradientImage = modGradientImage;
             Angles = angles;
-            Points = points;
-            RegionAngle = regionAngle;
+            Used = used;
+            Points = new LinkedList<Point>();
+            RegionAngle = 0.0;
             Precision = precision;
         }
 
@@ -34,15 +32,22 @@ namespace LSDInDotNet.Models
             if (start.X < 0 || start.X >= angles.Width) throw new ArgumentOutOfRangeException(nameof(start), "x coordinate not within the image");
             if (start.Y < 0 || start.Y >= angles.Height) throw new ArgumentOutOfRangeException(nameof(start), "y coordinate not within the image");
             
-            var regionPoints = new LinkedList<Point>();
-            regionPoints.AddLast(start);
+            var region = new Region<T>(modGradientImage, angles, used, precision);
+            region.UpdatePointsAndAngle(start);
+            return region;
+        }
 
-            var regionAngle = angles[start];
-            var sumDx = Math.Cos(regionAngle);
-            var sumDy = Math.Sin(regionAngle);
-            used[start] = true;
+        private void UpdatePointsAndAngle(Point start)
+        {
+            Points.Clear();
+            Points.AddLast(start);
 
-            var node = regionPoints.First;
+            RegionAngle = Angles[start];
+            var sumDx = Math.Cos(RegionAngle);
+            var sumDy = Math.Sin(RegionAngle);
+            Used[start] = true;
+
+            var node = Points.First;
             while (node != null)
             {
                 var p = node.Value;
@@ -50,24 +55,22 @@ namespace LSDInDotNet.Models
                 {
                     for (var yy = p.Y - 1; yy <= p.Y + 1; yy++)
                     {
-                        if (xx < 0 || yy < 0 || xx >= used.Width || yy >= used.Height ||
-                            used[xx, yy] || !angles[xx, yy].IsAlignedUpToPrecision(regionAngle, precision))
+                        if (xx < 0 || yy < 0 || xx >= Used.Width || yy >= Used.Height ||
+                            Used[xx, yy] || !Angles[xx, yy].IsAlignedUpToPrecision(RegionAngle, Precision))
                         {
                             continue;
                         }
 
-                        used[xx, yy] = true;
-                        regionPoints.AddLast(new Point(xx, yy));
+                        Used[xx, yy] = true;
+                        Points.AddLast(new Point(xx, yy));
 
-                        sumDx += Math.Cos(angles[xx, yy]);
-                        sumDy += Math.Sin(angles[xx, yy]);
-                        regionAngle = Math.Atan2(sumDy, sumDx);
+                        sumDx += Math.Cos(Angles[xx, yy]);
+                        sumDy += Math.Sin(Angles[xx, yy]);
+                        RegionAngle = Math.Atan2(sumDy, sumDx);
                     }
                 }
                 node = node.Next;
             }
-
-            return new Region<T>(modGradientImage, angles, regionPoints, regionAngle, precision);
         }
 
         public Rectangle<T> ToRectangle(double probabilityOfPointWithAngleWithinPrecision)
@@ -165,6 +168,96 @@ namespace LSDInDotNet.Models
             if (angle.AbsoluteAngleDifferenceTo(RegionAngle) > Precision) angle += MathHelpers.Pi;
 
             return angle;
+        }
+
+        /// <summary>
+        /// Reduce the region size by eliminating points far from the starting point until that leads
+        /// to a rectangle with the right density of region points. Returns true if the region
+        /// was shrunk successfully, and false otherwise.
+        /// </summary>
+        public bool ReduceRadius(double targetDensity, Rectangle<T> rectangle)
+        {
+            var currentDensity = GetDensity(rectangle);
+            if (currentDensity >= targetDensity) return true;
+
+            var centre = Points.First.Value;
+            var radius = Math.Max(centre.GetDistanceFrom(rectangle.FirstPoint), centre.GetDistanceFrom(rectangle.SecondPoint));
+
+            while (currentDensity < targetDensity)
+            {
+                radius *= 0.75;
+                var currentNode = Points.First;
+                while (currentNode.Next != null)
+                {
+                    var nextNode = currentNode.Next;
+                    var currentPoint = currentNode.Value;
+                    if (centre.GetDistanceFrom(currentPoint) > radius)
+                    {
+                        Used[currentPoint] = false;
+                        Points.Remove(currentNode);
+                    }
+                    currentNode = nextNode;
+                }
+
+                // If the region is now insignificant, discard it
+                if (Size < 2) return false;
+
+                // TODO: confirm the rectangle passed in is used in any further calculations,
+                // as we have not modified the rectangle parameter (the one passed in).
+                rectangle = ToRectangle(rectangle.ProbabilityOfPointWithAngleWithinPrecision);
+
+                targetDensity = GetDensity(rectangle);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Refine a region by computing the angle tolerance based on the standard
+        /// deviation of the angle at points near the region's starting point.
+        /// A new region is then grown from the same point.
+        /// </summary>
+        public bool Refine(double targetDensity, Rectangle<T> rectangle)
+        {
+            var currentDensity = GetDensity(rectangle);
+            if (currentDensity >= targetDensity) return true;
+
+            var centre = Points.First.Value;
+            var angleCentre = Angles[centre];
+            var sum = 0.0;
+            var squareSum = 0.0;
+            var numberOfPoints = 0;
+
+            foreach (var point in Points)
+            {
+                Used[point] = false;
+
+                if (!(centre.GetDistanceFrom(point) < rectangle.Width)) continue;
+
+                var angle = Angles[point];
+                var angleDifference = angle.SignedAngleDifferenceTo(angleCentre);
+                sum += angleDifference;
+                squareSum += angleDifference * angleDifference;
+                numberOfPoints++;
+            }
+
+            var meanAngle = sum / numberOfPoints;
+            // two times the standard deviation
+            Precision = 2.0 * Math.Sqrt(squareSum - 2.0 * meanAngle * sum / numberOfPoints + meanAngle * meanAngle);
+            UpdatePointsAndAngle(centre);
+
+            // If the region is now insignificant, discard it
+            if (Size < 2) return false;
+
+            rectangle = ToRectangle(rectangle.ProbabilityOfPointWithAngleWithinPrecision);
+            currentDensity = GetDensity(rectangle);
+
+            return !(currentDensity < targetDensity) || ReduceRadius(targetDensity, rectangle);
+        }
+
+        private double GetDensity(Rectangle<T> rectangle)
+        {
+            return Size / (rectangle.FirstPoint.GetDistanceFrom(rectangle.SecondPoint) * rectangle.Width);
         }
     }
 }

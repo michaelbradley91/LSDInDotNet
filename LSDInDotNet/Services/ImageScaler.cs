@@ -3,7 +3,12 @@ using LSDInDotNet.Models;
 
 namespace LSDInDotNet.Services
 {
-    public class ImageScaler
+    public interface IImageScaler
+    {
+        Image<double, T> ScaleWithGuassianSampler<T>(Image<double, T> image, double scale, double sigmaScale);
+    }
+
+    public class ImageScaler : IImageScaler
     {
         public Image<double, T> ScaleWithGuassianSampler<T>(Image<double, T> image, double scale, double sigmaScale)
         {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace LSDInDotNet.Models
 {
     // TODO: see if this is really the correct structure
-    public struct TupleList
+    public class TupleList
     {
         // TODO: see if size can be included in the constructor
         public TupleList(int dimension)

@@ -2,7 +2,7 @@
 
 namespace LSDInDotNet.Models
 {
-    public struct LevelLineResult<T>
+    public class LevelLineResult<T>
     {
         public Image<double, T> GradientImage { get; }
         public Image<double, T> ModGradientImage { get; }

@@ -2,7 +2,7 @@
 
 namespace LSDInDotNet.Models
 {
-    public struct Point
+    public class Point
     {
         public int X { get; set; }
         public int Y { get; set; }
@@ -14,6 +14,11 @@ namespace LSDInDotNet.Models
         }
 
         public double GetDistanceFrom(Point otherPoint)
+        {
+            return GetDistanceBetween(X, Y, otherPoint.X, otherPoint.Y);
+        }
+
+        public double GetDistanceFrom(DoublePoint otherPoint)
         {
             return GetDistanceBetween(X, Y, otherPoint.X, otherPoint.Y);
         }
