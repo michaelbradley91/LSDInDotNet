@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using LSDInDotNet.Helpers;
 using LSDInDotNet.Models;
+using System.Linq;
 
 namespace LSDInDotNet.Services
 {
@@ -87,7 +88,8 @@ namespace LSDInDotNet.Services
 
             var orderedCoordinates = new Point[(width - 1) * (height - 1)];
             var currentIndex = 0;
-            for (var i = numberOfBins - 1; i > 0; i--)
+            var total = bins.Sum(b => b.Count);
+            for (var i = numberOfBins - 1; i >= 0; i--)
             {
                 bins[i].CopyTo(orderedCoordinates, currentIndex);
                 currentIndex += bins[i].Count;

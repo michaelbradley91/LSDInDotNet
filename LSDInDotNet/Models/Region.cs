@@ -175,7 +175,7 @@ namespace LSDInDotNet.Models
         /// to a rectangle with the right density of region points. Returns true if the region
         /// was shrunk successfully, and false otherwise.
         /// </summary>
-        public bool ReduceRadius(double targetDensity, Rectangle<T> rectangle)
+        public bool ReduceRadius(double targetDensity, ref Rectangle<T> rectangle)
         {
             var currentDensity = GetDensity(rectangle);
             if (currentDensity >= targetDensity) return true;
@@ -187,7 +187,7 @@ namespace LSDInDotNet.Models
             {
                 radius *= 0.75;
                 var currentNode = Points.First;
-                while (currentNode.Next != null)
+                while (currentNode != null)
                 {
                     var nextNode = currentNode.Next;
                     var currentPoint = currentNode.Value;
@@ -202,8 +202,8 @@ namespace LSDInDotNet.Models
                 // If the region is now insignificant, discard it
                 if (Size < 2) return false;
 
-                // TODO: confirm the rectangle passed in is used in any further calculations,
-                // as we have not modified the rectangle parameter (the one passed in).
+                // We need to modify the rectangle passed in
+                // TODO update this method to return the rectangle.
                 rectangle = ToRectangle(rectangle.ProbabilityOfPointWithAngleWithinPrecision);
 
                 targetDensity = GetDensity(rectangle);
@@ -217,7 +217,7 @@ namespace LSDInDotNet.Models
         /// deviation of the angle at points near the region's starting point.
         /// A new region is then grown from the same point.
         /// </summary>
-        public bool Refine(double targetDensity, Rectangle<T> rectangle)
+        public bool Refine(double targetDensity, ref Rectangle<T> rectangle)
         {
             var currentDensity = GetDensity(rectangle);
             if (currentDensity >= targetDensity) return true;
@@ -243,7 +243,7 @@ namespace LSDInDotNet.Models
 
             var meanAngle = sum / numberOfPoints;
             // two times the standard deviation
-            Precision = 2.0 * Math.Sqrt(squareSum - 2.0 * meanAngle * sum / numberOfPoints + meanAngle * meanAngle);
+            Precision = 2.0 * Math.Sqrt((squareSum - 2.0 * meanAngle * sum) / numberOfPoints + meanAngle * meanAngle);
             UpdatePointsAndAngle(centre);
 
             // If the region is now insignificant, discard it
@@ -252,7 +252,7 @@ namespace LSDInDotNet.Models
             rectangle = ToRectangle(rectangle.ProbabilityOfPointWithAngleWithinPrecision);
             currentDensity = GetDensity(rectangle);
 
-            return !(currentDensity < targetDensity) || ReduceRadius(targetDensity, rectangle);
+            return !(currentDensity < targetDensity) || ReduceRadius(targetDensity, ref rectangle);
         }
 
         private double GetDensity(Rectangle<T> rectangle)

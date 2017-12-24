@@ -19,7 +19,7 @@ namespace LSDInDotNet
         /// <param name="detectionThreshold"></param>
         /// <param name="densityThreshold"></param>
         /// <param name="numberOfBins"></param>
-        TupleList Run<T>(
+        Tuple<TupleList, Image<int, T>> Run<T>(
             Image<double, T> image,
             double scale = 0.8,
             double sigmaScale = 0.6,
@@ -41,7 +41,7 @@ namespace LSDInDotNet
         /// <param name="densityThreshold"></param>
         /// <param name="numberOfBins"></param>
         /// <returns></returns>
-        TupleList Run<T>(
+        Tuple<TupleList, Image<int,T>> Run<T>(
             Image<double, T> scaledImage,
             double scale,
             double quantizationErrorBound = 2.0,
@@ -67,7 +67,7 @@ namespace LSDInDotNet
             _levelLineCalculator = levelLineCalculator;
         }
         
-        public TupleList Run<T>(
+        public Tuple<TupleList, Image<int, T>> Run<T>(
             Image<double, T> image,
             double scale = 0.8,
             double sigmaScale = 0.6,
@@ -94,7 +94,7 @@ namespace LSDInDotNet
             return Run(image, scale, quantizationErrorBound, angleThreshold, densityThreshold, densityThreshold, numberOfBins);
         }
 
-        public TupleList Run<T>(
+        public Tuple<TupleList, Image<int, T>> Run<T>(
             Image<double, T> scaledImage,
             double scale,
             double quantizationErrorBound = 2.0,
@@ -121,48 +121,62 @@ namespace LSDInDotNet
             var used = new Image<bool, T>(width, height, scaledImage.Metadata);
 
             var lineSegments = new TupleList(7);
+            var regionOutput = new Image<int, T>(angles.Width, angles.Height, angles.Metadata);
             foreach (var coordinate in coordinates)
             {
-                // ReSharper disable once CompareOfFloatsByEqualityOperator
-                if (used[coordinate] || angles[coordinate] == MathHelpers.NoAngle) continue;
-
-                var region = Region<T>.Create(coordinate, angles, modGradientImage, used, precision);
-                if (region.Size < minimumRegionSize) continue;
-
-                var rectangle = region.ToRectangle(probabilityOfPointWithAngleWithinPrecision);
-
-                if (!region.Refine(densityThreshold, rectangle)) continue;
-
-                // TODO get the rectangle back from the refine call
-                var logNumberOfFalseAlarms = rectangle.Improve(logNumberOfTests, detectionThreshold);
-
-                if (logNumberOfFalseAlarms <= detectionThreshold) continue;
-
-                rectangle.FirstPoint.X += 0.5;
-                rectangle.SecondPoint.X += 0.5;
-                rectangle.FirstPoint.Y += 0.5;
-                rectangle.SecondPoint.Y += 0.5;
-
-                if (!scale.IsRoughlyEqualTo(1))
+                try
                 {
-                    rectangle.FirstPoint.X /= scale;
-                    rectangle.FirstPoint.Y /= scale;
-                    rectangle.SecondPoint.X /= scale;
-                    rectangle.SecondPoint.Y /= scale;
-                    rectangle.Width /= scale;
+                    // ReSharper disable once CompareOfFloatsByEqualityOperator
+                    if (used[coordinate] || angles[coordinate] == MathHelpers.NoAngle) continue;
+
+                    var region = Region<T>.Create(coordinate, angles, modGradientImage, used, precision);
+                    if (region.Size < minimumRegionSize) continue;
+
+                    var rectangle = region.ToRectangle(probabilityOfPointWithAngleWithinPrecision);
+
+                    // Rectangle must be updated by the refine call
+                    if (!region.Refine(densityThreshold, ref rectangle)) continue;
+
+                    var logNumberOfFalseAlarms = rectangle.Improve(logNumberOfTests, detectionThreshold);
+
+                    if (logNumberOfFalseAlarms <= detectionThreshold) continue;
+
+                    rectangle.FirstPoint.X += 0.5;
+                    rectangle.SecondPoint.X += 0.5;
+                    rectangle.FirstPoint.Y += 0.5;
+                    rectangle.SecondPoint.Y += 0.5;
+
+                    if (!scale.IsRoughlyEqualTo(1))
+                    {
+                        rectangle.FirstPoint.X /= scale;
+                        rectangle.FirstPoint.Y /= scale;
+                        rectangle.SecondPoint.X /= scale;
+                        rectangle.SecondPoint.Y /= scale;
+                        rectangle.Width /= scale;
+                    }
+
+                    lineSegments.AddTuple(
+                        rectangle.FirstPoint.X, rectangle.FirstPoint.Y,
+                        rectangle.SecondPoint.X, rectangle.SecondPoint.Y,
+                        rectangle.Width,
+                        rectangle.ProbabilityOfPointWithAngleWithinPrecision,
+                        logNumberOfFalseAlarms);
+
+                    // Add the region to the image
+                    foreach (var point in region.Points)
+                    {
+                        // Use the number of line segments so far to identify this
+                        // particular line segment.
+                        regionOutput[point] = lineSegments.Size;
+                    }
+                } catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw e;
                 }
-
-                lineSegments.AddTuple(
-                    rectangle.FirstPoint.X, rectangle.FirstPoint.Y,
-                    rectangle.SecondPoint.X, rectangle.SecondPoint.Y,
-                    rectangle.Width,
-                    rectangle.ProbabilityOfPointWithAngleWithinPrecision,
-                    logNumberOfFalseAlarms);
-
-                // TODO add region to the region image?
             }
 
-            return lineSegments;
+            return Tuple.Create(lineSegments, regionOutput);
         }
     }
 }

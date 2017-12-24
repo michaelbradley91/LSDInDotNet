@@ -1,3 +1,5 @@
+using System;
+using LSDInDotNet.Models;
 using LSDInDotNet.Services;
 
 namespace LSDInDotNet
@@ -13,11 +15,34 @@ namespace LSDInDotNet
             _lineSegmentDetectorWrapper = lineSegmentDetectorWrapper;
         }
 
-        public void Run()
+        public Tuple<TupleList, Image<int, T>> Run<T>(Image<double, T> image,
+            double scale = 0.8,
+            double sigmaScale = 0.6,
+            double quantizationErrorBound = 2.0,
+            double angleThreshold = 22.5,
+            double detectionThreshold = 0.0,
+            double densityThreshold = 0.7,
+            int numberOfBins = 1024)
         {
-            _errorHandler.Wrap(() =>
+            return _errorHandler.Wrap(() =>
             {
-                _lineSegmentDetectorWrapper.Run();
+                return _lineSegmentDetectorWrapper.Run(image, scale, sigmaScale, quantizationErrorBound, angleThreshold,
+                    detectionThreshold, densityThreshold, numberOfBins);
+            });
+        }
+
+        public Tuple<TupleList, Image<int, T>> Run<T>(Image<double, T> scaledImage,
+            double scale = 0.8,
+            double quantizationErrorBound = 2.0,
+            double angleThreshold = 22.5,
+            double detectionThreshold = 0.0,
+            double densityThreshold = 0.7,
+            int numberOfBins = 1024)
+        {
+            return _errorHandler.Wrap(() =>
+            {
+                return _lineSegmentDetectorWrapper.Run(scaledImage, scale, quantizationErrorBound, angleThreshold,
+                    detectionThreshold, densityThreshold, numberOfBins);
             });
         }
     }
