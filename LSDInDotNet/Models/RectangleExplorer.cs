@@ -78,13 +78,13 @@ namespace LSDInDotNet.Models
 
                 if (_exploredPixel.X < _fourCornersInCircularOrder[1].X)
                 {
-                    _yStart = MathHelpers.InterpolateLow(_exploredPixel.X,
+                    _yEnd = MathHelpers.InterpolateHigh(_exploredPixel.X,
                         _fourCornersInCircularOrder[0],
                         _fourCornersInCircularOrder[1]);
                 }
                 else
                 {
-                    _yStart = MathHelpers.InterpolateLow(_exploredPixel.X,
+                    _yEnd = MathHelpers.InterpolateHigh(_exploredPixel.X,
                         _fourCornersInCircularOrder[1],
                         _fourCornersInCircularOrder[2]);
                 }
@@ -113,7 +113,7 @@ namespace LSDInDotNet.Models
             MoveToNextPixelToExplore();
         }
 
-        public Point Current => _exploredPixel;
+        public Point Current => new Point(_exploredPixel.X, _exploredPixel.Y);
         object IEnumerator.Current => Current;
 
         public void Dispose() { }

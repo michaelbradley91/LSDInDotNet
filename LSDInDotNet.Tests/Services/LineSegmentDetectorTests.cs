@@ -20,7 +20,7 @@ namespace LSDInDotNet.Tests.Services
         }
 
         [Test]
-        public void Resolve_CanResolveWrappedLineSegmentDetector()
+        public void Run_SuccessfullyIdentifiesLineSegments()
         {
             var pgmImage = PgmService.Read(Resources.chairs);
 
